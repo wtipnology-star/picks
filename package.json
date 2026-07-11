@@ -1,0 +1,14 @@
+{
+  "name": "wtipnology-picks",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WTipnology affiliate picks page. Static site + add-product script + guardrail tests.",
+  "scripts": {
+    "add": "node scripts/add-product.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

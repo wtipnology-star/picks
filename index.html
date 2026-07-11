@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>wtipnology — الأشياء اللي أستخدمها</title>
+<meta name="description" content="الشواحن والصوتيات والبيت الذكي وملحقات الجوال اللي جربتها وما زالت معاي." />
+<meta property="og:title" content="wtipnology | مختاراتي" />
+<meta property="og:description" content="التقنية اللي أستخدمها فعلاً. جربتها، وما زالت معاي." />
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' rx='22' fill='%23F2901E'/%3E%3Cpath d='M 30 0 h 40 v 5.2 a 7.8 7.8 0 0 1 -7.8 7.8 h -24.4 a 7.8 7.8 0 0 1 -7.8 -7.8 Z' fill='%230D0D0D'/%3E%3Ctext x='50' y='84' fill='%230D0D0D' text-anchor='middle' font-family='Archivo, sans-serif' font-weight='900' font-size='76.4' letter-spacing='-3.05'%3EW%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --orange:#F2901E; --ink:#0D0D0D; --paper:#F4EEE6;
+    --grey:#6B6B6B;   --warm:#9A9389;
+    --surface:#151515; --raised:#1B1B1B; --line:#272727; --line-soft:#1D1D1D;
+    --ar:'Cairo',system-ui,sans-serif;
+    --lat:'Archivo',system-ui,sans-serif;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--ink);color:var(--paper);font-family:var(--ar);
+       -webkit-font-smoothing:antialiased;line-height:1.75}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+
+  /* wide surface takes the wordmark, never the symbol */
+  .wordmark{font-family:var(--lat);font-weight:900;letter-spacing:-.05em;
+            text-transform:lowercase;direction:ltr;display:inline-block;
+            font-size:21px;line-height:1;color:var(--paper)}
+  .wordmark::after{content:"";display:inline-block;vertical-align:baseline;
+                   width:.14em;height:.14em;border-radius:50%;
+                   background:var(--orange);margin-left:.07em}
+
+  header{position:sticky;top:0;z-index:60;background:rgba(13,13,13,.93);
+         backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+  .bar{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+  .head-right{display:flex;align-items:center;gap:12px}
+  .handle{font-family:var(--lat);font-weight:600;font-size:12px;letter-spacing:.04em;
+          color:var(--grey);text-decoration:none;direction:ltr}
+  .handle:hover{color:var(--orange)}
+  .lang{font-family:var(--lat);font-weight:700;font-size:11px;letter-spacing:.08em;
+        background:transparent;color:var(--grey);border:1px solid var(--line);
+        border-radius:2px;padding:7px 11px;cursor:pointer;transition:border-color .15s,color .15s}
+  .lang:hover{border-color:var(--orange);color:var(--orange)}
+  .lang:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+  .hero{padding:60px 0 40px;border-bottom:1px solid var(--line-soft)}
+  .eyebrow{font-size:13px;font-weight:600;color:var(--orange);margin-bottom:16px;
+           display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:22px;height:2px;background:var(--orange);flex:none}
+  h1{font-weight:900;font-size:clamp(32px,7vw,58px);line-height:1.2;margin-bottom:20px}
+  html[dir="ltr"] h1{font-family:var(--lat);letter-spacing:-.03em;line-height:1.02;
+                     text-transform:lowercase}
+  h1 em{font-style:normal;color:var(--orange)}
+  .lede{max-width:56ch;color:var(--warm);font-size:16px}
+  .lede strong{color:var(--paper);font-weight:700}
+  .stats{display:flex;gap:34px;margin-top:30px;flex-wrap:wrap}
+  .stat-n{font-family:var(--lat);font-weight:900;font-size:27px;line-height:1;
+          direction:ltr;font-variant-numeric:tabular-nums}
+  .stat-l{font-size:12px;color:var(--grey);margin-top:6px}
+
+  .toolbar{position:sticky;top:60px;z-index:50;background:var(--ink);padding:22px 0 18px}
+  .search{position:relative;margin-bottom:16px}
+  .search .ico{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);
+               width:17px;height:17px;stroke:var(--grey);fill:none;stroke-width:2;
+               pointer-events:none;transition:stroke .15s}
+  #q{width:100%;height:48px;padding-inline-start:44px;padding-inline-end:44px;
+     background:var(--surface);color:var(--paper);border:1px solid var(--line);
+     border-radius:3px;font-family:var(--ar);font-size:15px;transition:border-color .15s}
+  #q::placeholder{color:var(--grey)}
+  #q:focus{outline:none;border-color:var(--orange)}
+  #q:focus + .ico{stroke:var(--orange)}
+  .clear{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);
+         background:transparent;border:0;color:var(--grey);cursor:pointer;font-size:20px;
+         line-height:1;padding:5px;display:none}
+  .clear:hover{color:var(--orange)}
+  .clear.on{display:block}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-family:var(--ar);font-size:13px;font-weight:700;padding:8px 15px;
+        background:transparent;color:var(--grey);border:1px solid var(--line);
+        border-radius:2px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+  .chip:hover{border-color:var(--warm);color:var(--paper)}
+  .chip[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .count{font-size:12px;color:var(--grey);padding-top:14px}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;padding:16px 0 56px}
+  @media(min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+  .card{background:var(--surface);border:1px solid var(--line-soft);border-radius:3px;
+        overflow:hidden;display:flex;flex-direction:column;position:relative;
+        transition:border-color .18s,transform .18s}
+  .card::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:2px;
+                background:var(--orange);transform:scaleY(0);transform-origin:top;
+                transition:transform .22s ease}
+  .card:hover{border-color:var(--line);transform:translateY(-2px)}
+  .card:hover::before{transform:scaleY(1)}
+
+  .strip{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
+         border-bottom:1px solid var(--line-soft);font-size:12px;font-weight:600}
+  .cat{color:var(--grey)}
+  .tested{color:var(--orange);display:flex;align-items:center;gap:6px;font-weight:700}
+  .tested::before{content:"";width:5px;height:5px;background:var(--orange);
+                  border-radius:50%;flex:none}
+
+  .shot{aspect-ratio:4/3;background:var(--raised);display:flex;align-items:center;
+        justify-content:center;overflow:hidden}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph{font-family:var(--lat);font-weight:600;font-size:10px;letter-spacing:.14em;
+      text-transform:uppercase;color:#3A3A3A}
+
+  .body{padding:16px 14px 18px;display:flex;flex-direction:column;flex:1}
+  .name{font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.5;color:var(--paper)}
+  .verdict{color:var(--warm);font-size:14px;line-height:1.8;margin-bottom:18px;flex:1}
+  mark{background:transparent;color:var(--orange);font-weight:700}
+
+  .foot{padding-top:14px;border-top:1px solid var(--line-soft)}
+  .buy{display:block;text-align:center;font-family:var(--ar);font-size:13px;font-weight:700;
+       padding:11px 22px;background:var(--orange);color:var(--ink);text-decoration:none;
+       border-radius:2px;transition:filter .15s}
+  .buy:hover{filter:brightness(1.12)}
+  .buy:focus-visible{outline:2px solid var(--paper);outline-offset:2px}
+
+  .disclose{border:1px solid var(--line);border-inline-start:2px solid var(--orange);
+            background:var(--surface);padding:22px;border-radius:3px;margin-bottom:48px}
+  .disclose h2{font-size:14px;color:var(--orange);font-weight:700;margin-bottom:10px}
+  .disclose p{color:var(--warm);font-size:14.5px;max-width:66ch;line-height:1.9}
+  .disclose strong{color:var(--paper);font-weight:700}
+
+  footer{border-top:1px solid var(--line-soft);padding:34px 0 52px}
+  .fbar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px}
+  .lockup-ar{text-align:right}
+  .ar-name{font-weight:900;font-size:24px;line-height:1.2;color:var(--paper)}
+  .ar-sub{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .rule{width:26px;height:3px;background:var(--orange);flex:none}
+  .wordmark.sm{font-size:11px}
+  .lockup-lat{text-align:left}
+  .lat-sub{display:flex;align-items:center;gap:9px;margin-top:6px}
+  .lat-name{font-family:var(--lat);font-weight:700;font-size:9.5px;letter-spacing:.30em;
+            text-transform:uppercase;color:var(--grey)}
+  .fright{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+  .socials{display:flex;gap:10px}
+  .soc{width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+       border:1px solid var(--line);border-radius:3px;color:var(--grey);
+       transition:border-color .15s,color .15s,transform .15s}
+  .soc svg{width:18px;height:18px;fill:currentColor;display:block}
+  .soc:hover{border-color:var(--orange);color:var(--orange);transform:translateY(-2px)}
+  .soc:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .fmail{font-size:13px;font-weight:600;color:var(--grey);text-decoration:none}
+  .fmail:hover{color:var(--orange)}
+
+  .state{grid-column:1/-1;padding:56px 20px;text-align:center;font-size:15px;color:var(--grey)}
+  .state b{display:block;color:var(--paper);margin-bottom:6px;font-weight:700}
+
+  .skel{background:var(--surface);border:1px solid var(--line-soft);border-radius:3px;
+        height:340px;animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.45}50%{opacity:.8}}
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    html{scroll-behavior:auto}
+  }
+
+  /* Brand: Archivo carries every Latin surface. In English mode the body and the
+     three controls that pin themselves to Cairo flip to Archivo. Arabic mode is
+     untouched, so Cairo still owns Arabic and never inherits Latin tracking. */
+  html[dir="ltr"] body{font-family:var(--lat)}
+  html[dir="ltr"] #q,
+  html[dir="ltr"] .chip,
+  html[dir="ltr"] .buy{font-family:var(--lat)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <span class="wordmark">wtipnology</span>
+    <div class="head-right">
+      <a class="handle" href="https://instagram.com/wtipnology" target="_blank" rel="noopener">@wtipnology</a>
+      <button class="lang" id="lang" type="button">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="h1"></h1>
+      <p class="lede" id="lede"></p>
+      <div class="stats" id="stats"></div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="search">
+        <input type="search" id="q" autocomplete="off" />
+        <svg class="ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path>
+        </svg>
+        <button class="clear" id="clear" type="button" aria-label="clear">&times;</button>
+      </div>
+      <div class="filters" id="filters" role="group"></div>
+      <div class="count" id="count"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <section class="disclose">
+      <h2 id="disc-h"></h2>
+      <p id="disc-p"></p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap fbar">
+    <div class="lockup-ar" id="lock-ar">
+      <div class="ar-name">وليد جناحي</div>
+      <div class="ar-sub"><span class="rule"></span><span class="wordmark sm">wtipnology</span></div>
+    </div>
+    <div class="lockup-lat" id="lock-lat" style="display:none">
+      <span class="wordmark" style="font-size:18px">wtipnology</span>
+      <div class="lat-sub"><span class="rule"></span><span class="lat-name">Waleed Janahi</span></div>
+    </div>
+    <div class="fright">
+      <div class="socials">
+        <a class="soc" href="https://instagram.com/wtipnology" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.13 1.38C1.35 2.68.93 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.13.67.66 1.34 1.08 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.13-1.38.66-.67 1.08-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.13C21.32 1.35 20.65.93 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0z"/><path d="M12 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/><circle cx="18.41" cy="5.59" r="1.44"/></svg>
+        </a>
+        <a class="soc" href="https://tiktok.com/@wtipnology" target="_blank" rel="noopener" aria-label="TikTok">
+          <svg viewBox="0 0 24 24"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.59 2.59 0 0 1 0-5.18c.27 0 .52.04.76.12v-3.2a5.8 5.8 0 0 0-.76-.05 5.72 5.72 0 1 0 5.72 5.72V9.01a7.35 7.35 0 0 0 4.29 1.38V7.3a4.28 4.28 0 0 1-3.27-1.48z"/></svg>
+        </a>
+        <!-- delete this block if the YouTube channel is not live yet -->
+        <a class="soc" href="https://youtube.com/@wtipnology" target="_blank" rel="noopener" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.5 6.5a3.02 3.02 0 0 0-2.12-2.14C19.5 3.85 12 3.85 12 3.85s-7.5 0-9.38.51A3.02 3.02 0 0 0 .5 6.5C0 8.4 0 12 0 12s0 3.6.5 5.5a3.02 3.02 0 0 0 2.12 2.14c1.88.51 9.38.51 9.38.51s7.5 0 9.38-.51a3.02 3.02 0 0 0 2.12-2.14C24 15.6 24 12 24 12s0-3.6-.5-5.5zM9.6 15.57V8.43L15.82 12 9.6 15.57z"/></svg>
+        </a>
+      </div>
+      <a class="fmail" href="mailto:waleed@wtipnology.com" id="partner"></a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* =========================================================================
+   Products live in products.csv, in this same repo. You never edit this file.
+   Add a product with:  npm run add <your noon affiliate link>
+   That appends a row to products.csv. Push, and the page updates itself.
+   ========================================================================= */
+const DATA = "products.csv";
+
+/* ---------------- nothing below needs editing ---------------- */
+
+/* If products.csv is ever unreachable (e.g. opened from disk), render this. */
+const FALLBACK = [
+  {cat_ar:"الشحن",cat_en:"Charging",
+   name_ar:"شاحن Momax 140 واط",name_en:"Momax 140W GaN Charger",
+   verdict_ar:"يشحن اللابتوب وجوالين مع بعض وبعده يدخل الجيب.",
+   verdict_en:"Charges the laptop and two phones at once and still fits in a pocket.",
+   url:"https://www.noon.com/uae-en/momax-140w-gan-charger/N70012345V/p/?utm_source=wtipnology&utm_medium=affiliate",img:""}
+];
+
+const T = {
+  ar:{
+    eyebrow:"جربته، وما زال معاي",
+    h1:'التقنية اللي<br>أستخدمها <em>فعلاً</em>',
+    lede:'ما في حشو مدفوع هني. كل قطعة بهالصفحة اشتريتها بفلوسي، جربتها، وما زلت أستخدمها. <strong>إذا ما صمدت معاي بالاستخدام اليومي، ما راح تلقاها هني.</strong>',
+    statL:["قطعة","متابع","الأول في البحرين تقنياً"],
+    all:"الكل", tested:"مجرّب", buy:"شوفه", addimg:"صورة",
+    search:"دوّر على أي شي...",
+    showing:n=>`${n} قطعة`,
+    emptyT:"ما لقيت شي", emptyS:"جرّب كلمة ثانية، أو غيّر التصنيف",
+    discH:"شلون تشتغل هالصفحة",
+    discP:'هذي روابط بعمولة. إذا اشتريت من خلالها، يجيني مبلغ بسيط <strong>بدون أي زيادة عليك</strong>. وهذا ما يغيّر شي في اللي أرشحه. ما أحط هني إلا الأشياء اللي أستخدمها بنفسي، ورديت منتجات ما عجبتني. هذا بالضبط سبب وجود الصفحة.',
+    partner:"للتعاون التجاري", toggle:"EN"
+  },
+  en:{
+    eyebrow:"Tested, and still with me",
+    h1:'the tech i<br>actually <em>use</em>',
+    lede:'No sponsored filler here. Every piece on this page I bought with my own money, tested, and kept using. <strong>If it did not survive daily use, you will not find it here.</strong>',
+    statL:["Products","Followers","Bahrain tech"],
+    all:"All", tested:"Tested", buy:"View", addimg:"Image",
+    search:"Search anything...",
+    showing:n=>`${n} product${n===1?"":"s"}`,
+    emptyT:"Nothing found", emptyS:"Try another word, or change the category",
+    discH:"How this page works",
+    discP:'These are affiliate links. If you buy through them, I earn a small commission at <strong>no extra cost to you</strong>. It changes nothing about what I recommend. I only put things here that I use myself, and I have turned down products that did not hold up. That is exactly why this page exists.',
+    partner:"Partnerships", toggle:"ع"
+  }
+};
+
+let lang='ar', active='__all__', term='', PICKS=[], CATS=[];
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function mark(t,q){
+  const s = esc(t);
+  if(!q) return s;
+  return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
+}
+
+/* CSV parser: handles quoted fields, commas and newlines inside them */
+function parseCSV(text){
+  const rows=[]; let row=[], f='', inQ=false;
+  text = text.replace(/^\uFEFF/,'');
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else inQ=false; }
+      else f+=c;
+    }else{
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(f); f=''; }
+      else if(c==='\n'){ row.push(f); rows.push(row); row=[]; f=''; }
+      else if(c!=='\r') f+=c;
+    }
+  }
+  if(f.length||row.length){ row.push(f); rows.push(row); }
+  return rows.filter(r=>r.some(v=>v.trim()!==''));
+}
+
+function rowsToPicks(rows){
+  const head = rows[0].map(h=>h.trim().toLowerCase());
+  const at = n => head.indexOf(n);
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i], g=n=>(r[at(n)]||'').trim();
+    if(g('show').toLowerCase()==='no') continue;         // hide a row from the sheet
+    if(!g('name_ar') && !g('name_en')) continue;
+    out.push({
+      cat_ar:g('category_ar'), cat_en:g('category_en'),
+      name_ar:g('name_ar'),    name_en:g('name_en'),
+      verdict_ar:g('verdict_ar'), verdict_en:g('verdict_en'),
+      url:g('url')||'#', img:g('image')
+    });
+  }
+  return out;
+}
+
+function buildCats(){
+  const seen=new Map();
+  PICKS.forEach(p=>{ if(p.cat_en && !seen.has(p.cat_en)) seen.set(p.cat_en,{ar:p.cat_ar,en:p.cat_en}); });
+  CATS=[...seen.values()];
+}
+
+const nameOf    = p => (lang==='ar'?p.name_ar   :p.name_en)    || p.name_en    || p.name_ar;
+const verdictOf = p => (lang==='ar'?p.verdict_ar:p.verdict_en) || p.verdict_en || p.verdict_ar;
+const catOf     = p => (lang==='ar'?p.cat_ar    :p.cat_en)     || p.cat_en;
+
+function renderChrome(){
+  const t=T[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir  = lang==='ar'?'rtl':'ltr';
+  $('eyebrow').textContent = t.eyebrow;
+  $('h1').innerHTML   = t.h1;
+  $('lede').innerHTML = t.lede;
+  $('disc-h').textContent = t.discH;
+  $('disc-p').innerHTML   = t.discP;
+  $('partner').textContent = t.partner;
+  $('lang').textContent = t.toggle;
+  /* the toggle shows an Arabic glyph in English mode; Arabic never takes tracking */
+  $('lang').style.letterSpacing = /[؀-ۿ]/.test(t.toggle) ? '0' : '';
+  $('q').placeholder = t.search;
+  $('lock-ar').style.display  = lang==='ar'?'block':'none';
+  $('lock-lat').style.display = lang==='ar'?'none' :'block';
+  const vals=[String(PICKS.length),"580K","#1"];
+  $('stats').innerHTML = t.statL.map((l,i)=>
+    `<div><div class="stat-n">${esc(vals[i])}</div><div class="stat-l">${esc(l)}</div></div>`).join('');
+}
+
+function renderFilters(){
+  const t=T[lang];
+  const list=[{key:'__all__',label:t.all},...CATS.map(c=>({key:c.en,label:lang==='ar'?c.ar:c.en}))];
+  $('filters').innerHTML='';
+  list.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='chip'; b.type='button'; b.textContent=c.label;
+    b.setAttribute('aria-pressed',String(c.key===active));
+    b.addEventListener('click',()=>{active=c.key;renderFilters();renderGrid();});
+    $('filters').appendChild(b);
+  });
+}
+
+const matches=(p,q)=> !q || [p.name_ar,p.name_en,p.verdict_ar,p.verdict_en,p.cat_ar,p.cat_en]
+  .join(' ').toLowerCase().includes(q.toLowerCase());
+
+function renderGrid(){
+  const t=T[lang];
+  const list=PICKS.filter(p=>active==='__all__'||p.cat_en===active).filter(p=>matches(p,term));
+  $('count').textContent = t.showing(list.length);
+
+  if(!list.length){
+    $('grid').innerHTML = `<div class="state"><b>${esc(t.emptyT)}</b>${esc(t.emptyS)}</div>`;
+    return;
+  }
+
+  $('grid').innerHTML = list.map(p=>`
+    <article class="card">
+      <div class="strip">
+        <span class="cat">${esc(catOf(p))}</span>
+        <span class="tested">${esc(t.tested)}</span>
+      </div>
+      <div class="shot">
+        ${p.img ? `<img src="${esc(p.img)}" alt="${esc(nameOf(p))}" loading="lazy">`
+                : `<span class="ph">${esc(t.addimg)}</span>`}
+      </div>
+      <div class="body">
+        <h3 class="name">${mark(nameOf(p),term)}</h3>
+        <p class="verdict">${mark(verdictOf(p),term)}</p>
+        <div class="foot">
+          <a class="buy" href="${esc(p.url)}" target="_blank" rel="nofollow sponsored noopener">${esc(t.buy)}</a>
+        </div>
+      </div>
+    </article>`).join('');
+}
+
+const renderAll=()=>{renderChrome();renderFilters();renderGrid();};
+
+async function load(){
+  $('grid').innerHTML = Array.from({length:6},()=>'<div class="skel"></div>').join('');
+  try{
+    const res = await fetch(DATA,{cache:'no-store'});
+    if(!res.ok) throw new Error('products.csv fetch failed');
+    const list = rowsToPicks(parseCSV(await res.text()));
+    PICKS = list.length ? list : FALLBACK;
+  }catch(err){
+    console.warn('Using fallback list:', err.message);
+    PICKS = FALLBACK;
+  }
+  buildCats();
+  renderAll();
+}
+
+$('q').addEventListener('input',e=>{
+  term=e.target.value.trim();
+  $('clear').classList.toggle('on',term.length>0);
+  renderGrid();
+});
+$('clear').addEventListener('click',()=>{
+  term=''; $('q').value=''; $('clear').classList.remove('on'); $('q').focus(); renderGrid();
+});
+$('lang').addEventListener('click',()=>{ lang = lang==='ar'?'en':'ar'; renderAll(); });
+
+load();
+</script>
+</body>
+</html>
