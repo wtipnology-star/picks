@@ -15,12 +15,17 @@ single source of truth, one script to add products, and tests that hold the line
 ## Add a product
 
 ```
-npm run add <your noon affiliate link>
+npm run add <your affiliate link>
 ```
 
-It reads the name and one spec from the link and page, drafts an Arabic + English
-row, prints it, and asks before appending to `products.csv`. It **refuses a plain
-noon product link** and tells you to paste your affiliate link instead.
+Works with any supported store (currently **noon** and **Amazon**). It reads the name
+and one spec from the link and page, drafts an Arabic + English row, prints it, and
+asks before appending to `products.csv`. It **refuses a link that is not from a
+supported store, or a bare/untracked link** that would earn you nothing (e.g. an
+`a.co` Amazon share link, or a plain noon product URL).
+
+To support another affiliate program later, add one block to `MERCHANTS` in
+`scripts/affiliate.mjs` (id, `match`, `isAffiliate`, `hint`). Nothing else changes.
 
 The verdict it drafts is a stub built from a single real number, or blank when the
 page has no such number. Rewrite it. The verdict is the product: one line a spec
@@ -41,23 +46,24 @@ npm test
 Four rules, enforced on every push before the site can deploy:
 
 1. No prices anywhere in the output.
-2. Every product URL is an affiliate link, not a bare noon link.
+2. Every product URL is an affiliate link from a supported store, not a bare one.
 3. No em dashes or hyphens in copy (hyphens allowed only inside product model names).
 4. Arabic strings never get CSS letter-spacing (it breaks the joins).
 
 ## What still needs a real value
 
-- The **affiliate rule** in `scripts/affiliate.mjs` currently treats "carries a
-  tracking parameter" as affiliate. Paste one real noon affiliate link and we narrow
-  it to that exact shape.
+- The **affiliate rules** in `scripts/affiliate.mjs` are best-guess until real
+  accounts exist (noon: "carries a tracking parameter"; Amazon: `amzn.to` or `?tag=`).
+  Paste one real tracked link per store and we narrow each to its exact shape.
 - The three rows in `products.csv` are **examples with placeholder links**. Replace
   or delete them.
 
 ## Deploy + domain
 
-Pages serves from this repo. The custom domain lives in the `CNAME` file
-(`picks.wtipnology.com`). At GoDaddy, add one DNS record:
+Pages serves from this repo (Actions build). The custom domain is set in the repo's
+Pages settings and served over HTTPS. DNS for `wtipnology.com` is managed in **AWS
+Route 53** (not GoDaddy — the nameservers point to AWS), where this record lives:
 
-| Type  | Name (Host) | Value               | TTL     |
-|-------|-------------|---------------------|---------|
-| CNAME | `picks`     | `wtipnology-star.github.io` | 1 hour  |
+| Type  | Name    | Value                       | TTL |
+|-------|---------|-----------------------------|-----|
+| CNAME | `picks` | `wtipnology-star.github.io` | 300 |

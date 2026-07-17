@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { isAffiliateUrl, isNoonProductUrl } from '../scripts/affiliate.mjs';
+import { isAffiliateUrl, isKnownMerchantUrl, merchantOf } from '../scripts/affiliate.mjs';
 import { findPrice, findFancyDash, hasHyphen } from '../scripts/guardrails.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -74,12 +74,24 @@ test('index.html: FALLBACK urls are affiliate links (or empty placeholder #)', (
   for (const u of urls) assert.ok(isAffiliateUrl(u), `FALLBACK url is not affiliate: ${u}`);
 });
 
-test('add-script rule: a bare noon product link is NOT affiliate, a tracked one IS', () => {
-  const bare = 'https://www.noon.com/uae-en/momax-140w-gan-charger/N70012345V/p/';
-  const tracked = bare + '?utm_source=wtipnology';
-  assert.ok(isNoonProductUrl(bare), 'expected bare link recognised as a noon product page');
-  assert.equal(isAffiliateUrl(bare), false, 'bare noon link must not count as affiliate');
-  assert.equal(isAffiliateUrl(tracked), true, 'tracked noon link must count as affiliate');
+test('affiliate rule holds across supported stores', () => {
+  // noon: bare product link is not affiliate, tracked one is
+  const noonBare = 'https://www.noon.com/uae-en/momax-140w-gan-charger/N70012345V/p/';
+  assert.equal(isKnownMerchantUrl(noonBare), true, 'noon link should be a known store');
+  assert.equal(isAffiliateUrl(noonBare), false, 'bare noon link must not count as affiliate');
+  assert.equal(isAffiliateUrl(noonBare + '?utm_source=wtipnology'), true, 'tracked noon link must count');
+
+  // amazon: a.co share link earns nothing; amzn.to (SiteStripe) and ?tag= do
+  assert.equal(isKnownMerchantUrl('https://a.co/d/0gB3ciBx'), true, 'a.co should be a known store');
+  assert.equal(isAffiliateUrl('https://a.co/d/0gB3ciBx'), false, 'a.co share link must not count');
+  assert.equal(isAffiliateUrl('https://amzn.to/3abcXYZ'), true, 'amzn.to SiteStripe link must count');
+  assert.equal(isAffiliateUrl('https://www.amazon.ae/dp/B0ABC12345?tag=wtip-21'), true, '?tag= must count');
+  assert.equal(isAffiliateUrl('https://www.amazon.ae/dp/B0ABC12345'), false, 'untagged amazon must not count');
+  assert.equal(merchantOf('https://www.amazon.ae/dp/B0ABC12345').id, 'amazon');
+
+  // unknown store is refused outright
+  assert.equal(isKnownMerchantUrl('https://example.com/x'), false, 'unknown store must be unrecognised');
+  assert.equal(isAffiliateUrl('https://example.com/x?tag=y'), false, 'unknown store never counts as affiliate');
 });
 
 test('index.html: buy links carry rel="nofollow sponsored"', () => {

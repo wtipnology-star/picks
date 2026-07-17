@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// npm run add <noon affiliate url>
+// npm run add <affiliate url>
 //
-// Parses the product name and one spec from the noon URL and page, drafts an
-// Arabic + English row, prints it for you to approve, then appends it to
-// products.csv. Refuses a plain (non affiliate) noon link.
+// Parses the product name and one spec from a supported store's URL and page,
+// drafts an Arabic + English row, prints it for you to approve, then appends it
+// to products.csv. Refuses a link that is not from a supported store, or that is
+// a bare (untracked) link that would earn you nothing.
 //
-// The verdict it drafts is a STUB built from one real spec number, or blank when
+// Supported stores and what a valid affiliate link looks like live in affiliate.mjs.
+// The verdict it drafts is a stub built from one real spec number, or blank when
 // the page gives no such number. You rewrite it. It never writes filler.
 
 import { readFile, appendFile, writeFile } from 'node:fs/promises';
@@ -14,14 +16,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { isNoonUrl, isAffiliateUrl } from './affiliate.mjs';
+import { merchantOf, isAffiliateUrl, supportedStores } from './affiliate.mjs';
 import { findPrice, findFancyDash, hasHyphen } from './guardrails.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CSV = join(ROOT, 'products.csv');
 const HEADER = 'show,category_ar,category_en,name_ar,name_en,verdict_ar,verdict_en,url,image';
 
-const ACRONYMS = new Set(['USB', 'GAN', 'GaN', 'HDMI', 'RGB', 'LED', 'ANC', 'TWS', 'PD', 'W', 'AI', '4K', '8K', 'TV', 'SSD', 'HD']);
+const ACRONYMS = new Set(['USB', 'GAN', 'GaN', 'HDMI', 'RGB', 'LED', 'ANC', 'TWS', 'PD', 'AI', '4K', '8K', 'TV', 'SSD', 'HD', 'GB', 'TB']);
 const CATS = [
   [/charg|power|gan|cable|adapter|powerbank|brick|\bpd\b|watt/i, { ar: 'الشحن', en: 'Charging' }],
   [/audio|speaker|soundcore|headphone|earbud|buds|\bmic\b|sound/i, { ar: 'الصوت', en: 'Audio' }],
@@ -32,12 +34,19 @@ const CATS = [
 
 function die(msg) { console.error('\n' + msg + '\n'); process.exit(1); }
 
-function slugFromNoonUrl(u) {
-  // .../uae-en/momax-140w-gan-charger/N70012345V/p/  ->  momax-140w-gan-charger
+// Generic slug: the human, hyphenated segment. Works for noon
+// (.../momax-140w-gan-charger/N70012345V/p/) and Amazon (.../Anker-Charger-140W/dp/B0..).
+function slugFromUrl(u) {
   const parts = u.pathname.split('/').filter(Boolean);
-  // drop the locale segment (uae-en) and the product code / p
-  const cand = parts.filter(p => !/^[a-z]{2,}-[a-z]{2}$/i.test(p) && !/^N[0-9A-Z]{6,}$/i.test(p) && p !== 'p');
-  return cand.sort((a, b) => b.length - a.length)[0] || '';
+  const drop = (p) =>
+    /^[a-z]{2,}-[a-z]{2}$/i.test(p) ||           // locale segment (uae-en)
+    /^N[0-9A-Z]{6,}$/i.test(p) ||                // noon product code
+    /^B0[0-9A-Z]{8}$/i.test(p) ||                // amazon ASIN
+    /^[A-Z0-9]{10}$/.test(p) ||                  // bare ASIN
+    /^(dp|gp|p|d|product|ref|slredirect)$/i.test(p);
+  const cand = parts.filter((p) => !drop(p));
+  cand.sort((a, b) => (b.split('-').length - a.split('-').length) || (b.length - a.length));
+  return cand[0] || '';
 }
 
 const UNIT_CASE = { mah: 'mAh', wh: 'Wh', hz: 'Hz', gb: 'GB', tb: 'TB', w: 'W', k: 'K' };
@@ -45,40 +54,37 @@ function fixToken(w) {
   const up = w.toUpperCase();
   if (ACRONYMS.has(up)) return up === 'GAN' ? 'GaN' : up;
   const unit = w.match(/^(\d+(?:\.\d+)?)(mah|wh|hz|gb|tb|w|k)$/i);
-  if (unit) return unit[1] + UNIT_CASE[unit[2].toLowerCase()];   // 24000mah -> 24000mAh
-  if (/\d/.test(w)) return up;                                   // n70, 4k, p1
+  if (unit) return unit[1] + UNIT_CASE[unit[2].toLowerCase()];
+  if (/\d/.test(w)) return up;
   return w.charAt(0).toUpperCase() + w.slice(1);
 }
-function titleFromSlug(slug) {
-  return slug.split('-').filter(Boolean).map(fixToken).join(' ').trim();
-}
+function titleFromSlug(slug) { return slug.split('-').filter(Boolean).map(fixToken).join(' ').trim(); }
 
-// noon titles are SEO strings: "Buy X ... | Best Price UAE | Dubai | noon".
-// Keep only the part before the first pipe, and strip the Buy/Shop wrappers.
+// Strip store SEO wrappers: noon "تسوق ... أونلاين", Amazon "Amazon.ae: ... : Category",
+// generic "Buy ... Online" and everything after the first pipe.
 function cleanName(s) {
   return String(s || '')
     .split('|')[0]
+    .replace(/^\s*amazon\.[a-z.]+\s*:\s*/i, '')
     .replace(/^\s*(buy|shop|تسوق|اشتري)\s+/i, '')
-    .replace(/\s+online\b.*$/i, '')     // English tail
-    .replace(/\s*أونلاين.*$/, '')        // Arabic tail (no \b before Arabic script)
+    .replace(/\s+online\b.*$/i, '')
+    .replace(/\s*أونلاين.*$/, '')
+    .replace(/\s*:\s*[A-Za-z ]{2,30}$/, '')      // trailing ": Electronics"
     .replace(/\s{2,}/g, ' ').trim();
 }
 
-// Pull one salient spec number. Priority order matters: the strongest single fact wins.
+// One salient spec number, strongest fact first.
 function extractSpec(text) {
   const t = String(text || '');
   const rules = [
-    [/(\d+(?:\.\d+)?)\s?W\b/i,      (n) => ({ en: `${n}W in one charger`, ar: `${n} واط من راس واحد` })],
-    [/(\d{3,5})\s?mAh\b/i,          (n) => ({ en: `${n}mAh in the pack`, ar: `${n} مللي أمبير في البنك` })],
-    [/(\d+(?:\.\d+)?)\s?Wh\b/i,     (n) => ({ en: `${n}Wh`, ar: `${n} واط ساعة` })],
-    [/(\d+(?:\.\d+)?)\s?(TB|GB)\b/i,(n, u) => ({ en: `${n}${u.toUpperCase()} of storage`, ar: `${n} ${/tb/i.test(u) ? 'تيرا' : 'جيجا'} تخزين` })],
-    [/(\d+(?:\.\d+)?)\s?Hz\b/i,     (n) => ({ en: `${n}Hz`, ar: `${n} هرتز` })],
+    [/(\d+(?:\.\d+)?)\s?W\b/i,        (n) => ({ en: `${n}W in one charger`, ar: `${n} واط من راس واحد` })],
+    [/(\d{3,5})\s?mAh\b/i,            (n) => ({ en: `${n}mAh in the pack`, ar: `${n} مللي أمبير في البنك` })],
+    [/(\d+(?:\.\d+)?)\s?Wh\b/i,       (n) => ({ en: `${n}Wh`, ar: `${n} واط ساعة` })],
+    [/(\d+(?:\.\d+)?)\s?(TB|GB)\b/i,  (n, u) => ({ en: `${n}${u.toUpperCase()} of storage`, ar: `${n} ${/tb/i.test(u) ? 'تيرا' : 'جيجا'} تخزين` })],
+    [/(\d+(?:\.\d+)?)\s?Hz\b/i,       (n) => ({ en: `${n}Hz`, ar: `${n} هرتز` })],
     [/(\d+(?:\.\d+)?)\s?(?:inch|["”])\b/i, (n) => ({ en: `${n} inch`, ar: `${n} إنش` })],
   ];
-  for (const [re, fmt] of rules) {
-    const m = t.match(re);
-    if (m) return fmt(m[1], m[2]);
-  }
+  for (const [re, fmt] of rules) { const m = t.match(re); if (m) return fmt(m[1], m[2]); }
   return null;
 }
 
@@ -87,7 +93,7 @@ function guessCategory(text) {
   return { ar: 'ملحقات', en: 'Accessories' };
 }
 
-async function fetchMeta(url) {
+async function fetchMeta(url, merchant) {
   const out = { title: '', ar: '' };
   const get = async (u) => {
     const ctrl = new AbortController();
@@ -108,15 +114,17 @@ async function fetchMeta(url) {
   };
   const html = await get(url);
   if (html) out.title = og(html);
-  // best effort Arabic name from the -ar locale variant
-  try {
-    const arUrl = new URL(url);
-    if (/-en\//.test(arUrl.pathname)) {
-      arUrl.pathname = arUrl.pathname.replace(/-en\//, '-ar/');
-      const arHtml = await get(arUrl.toString());
-      if (arHtml) out.ar = og(arHtml);
-    }
-  } catch { /* ignore */ }
+  // noon exposes an Arabic page at the -ar locale; other stores do not, cheaply.
+  if (merchant && merchant.id === 'noon') {
+    try {
+      const arUrl = new URL(url);
+      if (/-en\//.test(arUrl.pathname)) {
+        arUrl.pathname = arUrl.pathname.replace(/-en\//, '-ar/');
+        const arHtml = await get(arUrl.toString());
+        if (arHtml) out.ar = og(arHtml);
+      }
+    } catch { /* ignore */ }
+  }
   return out;
 }
 
@@ -127,62 +135,59 @@ function csvEscape(v) {
 
 async function main() {
   const url = (process.argv[2] || '').trim();
+  if (!url) die(`Usage:  npm run add <affiliate url>\nSupported stores: ${supportedStores()}`);
 
-  if (!url) die('Usage:  npm run add <noon affiliate url>');
+  const merchant = merchantOf(url);
+  if (!merchant) die(`That is not a store I recognise. Supported: ${supportedStores()}.\nPaste a tracked affiliate link.\nNothing was added.`);
 
-  // Guardrail 2, at the door: affiliate links only.
+  // Guardrail 2, at the door: affiliate (tracked) links only.
   if (!isAffiliateUrl(url)) {
-    if (isNoonUrl(url)) {
-      die([
-        'That is a plain noon product link, not an affiliate link.',
-        'Open it from your noon affiliate dashboard and copy the tracked link instead,',
-        'then run:  npm run add <that link>',
-        '',
-        'Nothing was added.',
-      ].join('\n'));
-    }
-    die('That does not look like a noon affiliate link. Paste your tracked noon link.\nNothing was added.');
+    die([
+      `That is a plain ${merchant.label} link, not an affiliate link, so it would earn you nothing.`,
+      merchant.hint,
+      '',
+      'Nothing was added.',
+    ].join('\n'));
   }
 
-  console.log('\nReading the product page...');
-  const meta = await fetchMeta(url);
+  console.log(`\nReading the ${merchant.label} product page...`);
+  const meta = await fetchMeta(url, merchant);
 
   let u; try { u = new URL(url); } catch { u = null; }
-  const slug = u ? slugFromNoonUrl(u) : '';
-  // Prefer the slug: it is the concise, human name. og:title is SEO cruft, kept only
-  // as a fallback when there is no slug. Arabic has no slug, so it uses the -ar title.
-  const name_en = titleFromSlug(slug) || cleanName(meta.title) || '';
+  const slug = u ? slugFromUrl(u) : '';
+  const slugName = titleFromSlug(slug);
+  const titleName = cleanName(meta.title);
+  // prefer a multi-word slug (reads like a real name); else the cleaned page title.
+  const name_en = (slugName && slugName.includes(' ')) ? slugName : (titleName || slugName || '');
   const name_ar = cleanName(meta.ar) || name_en;
   if (!name_en) die('Could not read a product name from the link or page. Nothing was added.');
 
   const basis = [name_en, meta.title, slug].join(' ');
   const cat = guessCategory(basis);
   const spec = extractSpec(basis);
-
   const verdict_en = spec ? `${spec.en}.` : '';
   const verdict_ar = spec ? `${spec.ar}.` : '';
 
   const row = {
-    show: 'yes',
-    category_ar: cat.ar, category_en: cat.en,
-    name_ar, name_en,
-    verdict_ar, verdict_en,
-    url, image: '',
+    show: 'yes', category_ar: cat.ar, category_en: cat.en,
+    name_ar, name_en, verdict_ar, verdict_en, url, image: '',
   };
 
   // Enforce the guardrails on what we are about to write.
-  const proseFields = ['category_ar', 'category_en', 'verdict_ar', 'verdict_en'];
   const copyFields = ['category_ar', 'category_en', 'name_ar', 'name_en', 'verdict_ar', 'verdict_en'];
+  const proseFields = ['category_ar', 'category_en', 'verdict_ar', 'verdict_en'];
   for (const f of copyFields) {
     const p = findPrice(row[f]); if (p) die(`Refusing to write: a price ("${p}") landed in ${f}.`);
     const d = findFancyDash(row[f]); if (d) die(`Refusing to write: an em/en dash landed in ${f}. Rewrite it with plain words.`);
   }
   for (const f of proseFields) if (hasHyphen(row[f])) die(`Refusing to write: a hyphen landed in ${f}. Rewrite it without a hyphen.`);
   for (const f of ['name_ar', 'name_en']) if (hasHyphen(row[f])) console.warn(`  ! heads up: "${row[f]}" contains a hyphen. Fine for a model name, but check it.`);
+  if (!name_en.includes(' ')) console.warn('  ! could not read a clean product name (short/redirect link). Edit name_en below before it goes live.');
+  if (merchant.id !== 'noon' && name_ar === name_en) console.warn('  ! Arabic name copied from English. Rewrite name_ar in your dialect.');
 
-  // Preview.
   const line = [row.show, row.category_ar, row.category_en, row.name_ar, row.name_en, row.verdict_ar, row.verdict_en, row.url, row.image].map(csvEscape).join(',');
-  console.log('\n  category   ' + row.category_en + '  /  ' + row.category_ar);
+  console.log('\n  store      ' + merchant.label);
+  console.log('  category   ' + row.category_en + '  /  ' + row.category_ar);
   console.log('  name (en)  ' + row.name_en);
   console.log('  name (ar)  ' + row.name_ar);
   console.log('  verdict    ' + (verdict_en || '(blank)'));

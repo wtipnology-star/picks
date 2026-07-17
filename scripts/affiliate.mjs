@@ -1,44 +1,60 @@
-// Single source of truth for "what is a noon link" and "what is an affiliate link".
-// The add-script and the guardrail tests both import from here, so the rule lives
-// in exactly one place.
+// The single source of truth for which stores the picks page supports and what
+// counts as a real affiliate (tracked) link for each. The add-script and the
+// guardrail tests both import from here.
 //
-// NOTE: until we have a real noon affiliate link to look at, "affiliate" is defined
-// broadly as "carries a tracking parameter". The day Waleed pastes a real one, narrow
-// AFFILIATE_PARAMS / AFFILIATE_HOSTS to match its exact shape and the tests still pass.
+// TO ADD A NEW AFFILIATE PROGRAM later: add one object to MERCHANTS below with
+//   - id / label
+//   - match(u):      is this URL one of this store's links?
+//   - isAffiliate(u): does it carry this store's tracking so you actually earn?
+//   - hint:          what to tell the user when they paste a bare (untracked) link
+// Nothing else in the codebase needs to change.
+//
+// NOTE: both rules below are best-guess until Waleed has real accounts. When he
+// joins noon / Amazon Associates and pastes one real tracked link, tighten the
+// matching isAffiliate() to that exact shape. The tests still pass.
 
-export const AFFILIATE_PARAMS = [
+const TRACKING_PARAMS = [
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
-  'aff', 'aff_id', 'a_aid', 'affiliate', 'affid', 'tag', 'ref',
+  'aff', 'aff_id', 'a_aid', 'affiliate', 'affid', 'ref',
 ];
 
-// Redirect / tracker hosts that are themselves affiliate links regardless of params.
-export const AFFILIATE_HOSTS = ['c.noon.com', 'go.noon.com'];
-
-function parse(url) {
-  try { return new URL(String(url).trim()); } catch { return null; }
+function parse(url) { try { return new URL(String(url).trim()); } catch { return null; } }
+function host(u) { return u.hostname.toLowerCase().replace(/^www\./, ''); }
+function hasParam(u, names) {
+  for (const p of names) { const v = u.searchParams.get(p); if (v !== null && v.trim() !== '') return true; }
+  return false;
 }
 
-export function isNoonUrl(url) {
-  const u = parse(url);
-  if (!u) return false;
-  const h = u.hostname.toLowerCase().replace(/^www\./, '');
-  return h === 'noon.com' || h.endsWith('.noon.com');
-}
+export const MERCHANTS = [
+  {
+    id: 'noon',
+    label: 'noon',
+    match: (u) => { const h = host(u); return h === 'noon.com' || h.endsWith('.noon.com'); },
+    // A tracker host, or any tracking parameter. (Placeholder until a real noon link.)
+    isAffiliate: (u) => ['c.noon.com', 'go.noon.com'].includes(host(u)) || hasParam(u, [...TRACKING_PARAMS, 'tag']),
+    hint: 'Open it from your noon affiliate dashboard and copy the tracked link.',
+  },
+  {
+    id: 'amazon',
+    label: 'Amazon',
+    // amazon.<tld>, the amzn.to short-link domain, and the a.co share domain.
+    match: (u) => { const h = host(u); return h === 'amzn.to' || h === 'a.co' || /(^|\.)amazon\.[a-z.]+$/.test(h); },
+    // Associates links carry a ?tag= associate id. amzn.to short links come from
+    // SiteStripe and bake the tag in. a.co is the plain "share" shortener with NO
+    // tag, so it does not count.
+    isAffiliate: (u) => host(u) === 'amzn.to' || hasParam(u, ['tag']),
+    hint: 'Use your Amazon Associates link: the amzn.to short link from SiteStripe, or a product URL with your ?tag=. The a.co share link earns nothing.',
+  },
+];
 
-// A noon product page: has /p/ in the path, or a product code segment like N70012345V.
-export function isNoonProductUrl(url) {
-  const u = parse(url);
-  if (!u || !isNoonUrl(url)) return false;
-  return /\/p\/?($|[/?#])/.test(u.pathname) || /\/N[0-9A-Z]{6,}\b/i.test(u.pathname);
-}
+export function merchantOf(url) { const u = parse(url); if (!u) return null; return MERCHANTS.find((m) => m.match(u)) || null; }
+export function isKnownMerchantUrl(url) { return merchantOf(url) !== null; }
 
 export function isAffiliateUrl(url) {
   const u = parse(url);
   if (!u) return false;
-  if (AFFILIATE_HOSTS.includes(u.hostname.toLowerCase())) return true;
-  for (const p of AFFILIATE_PARAMS) {
-    const v = u.searchParams.get(p);
-    if (v !== null && v.trim() !== '') return true;
-  }
-  return false;
+  const m = MERCHANTS.find((x) => x.match(u));
+  return m ? m.isAffiliate(u) : false;
 }
+
+export function supportedStores() { return MERCHANTS.map((m) => m.label).join(', '); }
