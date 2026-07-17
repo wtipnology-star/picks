@@ -95,6 +95,33 @@
   @media(min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
   @media(min-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
 
+  /* ---- Phones: shrink the hero so products surface sooner, and float the
+     search as a bottom bar within thumb reach. Desktop keeps search up top. ---- */
+  @media(max-width:639px){
+    .hero{padding:26px 0 22px}
+    .eyebrow{margin-bottom:12px}
+    h1{margin-bottom:12px}
+    .lede{font-size:15px}
+    .stats{margin-top:18px;gap:22px}
+    .stat-n{font-size:22px}
+
+    /* the top toolbar now carries only the filters + count */
+    .toolbar{padding:14px 0 10px}
+
+    /* search floats at the bottom, pinned above the home indicator */
+    .searchbar{
+      position:fixed; inset-inline:0; bottom:0; z-index:65;
+      padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+      background:rgba(13,13,13,.90); backdrop-filter:blur(12px);
+      border-top:1px solid var(--line);
+    }
+    .searchbar .search{margin-bottom:0}
+    #q{height:52px; box-shadow:0 8px 26px rgba(0,0,0,.45)}
+
+    /* room at the end so the last card can scroll clear of the floating bar */
+    body{padding-bottom:84px}
+  }
+
   .card{background:var(--surface);border:1px solid var(--line-soft);border-radius:3px;
         overflow:hidden;display:flex;flex-direction:column;position:relative;
         transition:border-color .18s,transform .18s}
@@ -202,12 +229,14 @@
 
   <div class="wrap">
     <div class="toolbar">
-      <div class="search">
-        <input type="search" id="q" autocomplete="off" />
-        <svg class="ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path>
-        </svg>
-        <button class="clear" id="clear" type="button" aria-label="clear">&times;</button>
+      <div class="searchbar">
+        <div class="search">
+          <input type="search" id="q" autocomplete="off" />
+          <svg class="ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path>
+          </svg>
+          <button class="clear" id="clear" type="button" aria-label="clear">&times;</button>
+        </div>
       </div>
       <div class="filters" id="filters" role="group"></div>
       <div class="count" id="count"></div>
