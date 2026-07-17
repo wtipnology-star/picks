@@ -81,6 +81,8 @@ function cleanName(s) {
        .replace(/\s*أونلاين.*$/, '');
   // cut at the first " - " / " : " separator — everything after is descriptors/category
   t = t.split(/\s+[-–—:]\s+/)[0];
+  // cut at the first comma that is not a digit grouping comma (25,000 is kept)
+  t = t.replace(/(?:(?<!\d),|,(?!\d)).*$/s, '');
   return t.replace(/\s{2,}/g, ' ').trim();
 }
 

@@ -6,7 +6,7 @@
 const PRICE_RE = new RegExp([
   '\\b(BHD|SAR|AED|KWD|QAR|OMR|USD|EUR|GBP)\\b',
   '[$£€]',
-  'ر\\.\\s?[سقع]|د\\.\\s?[بإك]',   // ر.س ر.ق ر.ع د.ب د.إ د.ك — the dot is required
+  'ر\\.[سقع]|د\\.[بإك]',   // ر.س ر.ق ر.ع د.ب د.إ د.ك — dot required, no space (a spaced "د. ك" is a sentence boundary)
   'ريال|درهم|دينار|دولار|يورو',
   'سعر|بسعر',
 ].join('|'), 'i');
