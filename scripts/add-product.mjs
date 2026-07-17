@@ -24,12 +24,14 @@ const CSV = join(ROOT, 'products.csv');
 const HEADER = 'show,category_ar,category_en,name_ar,name_en,verdict_ar,verdict_en,url,image';
 
 const ACRONYMS = new Set(['USB', 'GAN', 'GaN', 'HDMI', 'RGB', 'LED', 'ANC', 'TWS', 'PD', 'AI', '4K', '8K', 'TV', 'SSD', 'HD', 'GB', 'TB']);
+// Keyword -> category. Order matters (first match wins). Patterns use word
+// boundaries so "AI-Powered" does not read as "power" -> Charging.
 const CATS = [
-  [/charg|power|gan|cable|adapter|powerbank|brick|\bpd\b|watt/i, { ar: 'الشحن', en: 'Charging' }],
-  [/audio|speaker|soundcore|headphone|earbud|buds|\bmic\b|sound/i, { ar: 'الصوت', en: 'Audio' }],
-  [/smart|aqara|sensor|bulb|plug|home|hub|zigbee/i, { ar: 'البيت الذكي', en: 'Smart Home' }],
-  [/case|screen|mount|holder|stand|grip|magsafe|phone/i, { ar: 'ملحقات الجوال', en: 'Phone Accessories' }],
-  [/watch|band|strap|wearable/i, { ar: 'الساعات', en: 'Wearables' }],
+  [/charger|charging|\bgan\b|\bcable\b|adapter|power\s?bank|\bpd\b|\bwatt|\bwh\b/i, { ar: 'الشحن', en: 'Charging' }],
+  [/audio|speaker|soundcore|headphone|earbud|\bbuds\b|\bmic\b|earphone|\bsound\b/i, { ar: 'الصوت', en: 'Audio' }],
+  [/smart\s?home|aqara|\bsensor\b|\bbulb\b|smart\s?plug|\bhub\b|zigbee|matter/i, { ar: 'البيت الذكي', en: 'Smart Home' }],
+  [/\bcase\b|screen protector|\bmount\b|holder|\bstand\b|magsafe|grip/i, { ar: 'ملحقات الجوال', en: 'Phone Accessories' }],
+  [/watch|\bband\b|strap|wearable|fitbit|tracker|fitness|garmin|smartwatch/i, { ar: 'الساعات', en: 'Wearables' }],
 ];
 
 function die(msg) { console.error('\n' + msg + '\n'); process.exit(1); }
@@ -60,17 +62,26 @@ function fixToken(w) {
 }
 function titleFromSlug(slug) { return slug.split('-').filter(Boolean).map(fixToken).join(' ').trim(); }
 
-// Strip store SEO wrappers: noon "تسوق ... أونلاين", Amazon "Amazon.ae: ... : Category",
-// generic "Buy ... Online" and everything after the first pipe.
-function cleanName(s) {
+function decodeEntities(s) {
   return String(s || '')
-    .split('|')[0]
-    .replace(/^\s*amazon\.[a-z.]+\s*:\s*/i, '')
-    .replace(/^\s*(buy|shop|تسوق|اشتري)\s+/i, '')
-    .replace(/\s+online\b.*$/i, '')
-    .replace(/\s*أونلاين.*$/, '')
-    .replace(/\s*:\s*[A-Za-z ]{2,30}$/, '')      // trailing ": Electronics"
-    .replace(/\s{2,}/g, ' ').trim();
+    .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&apos;|&#0?39;|&#x27;/gi, "'")
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCodePoint(+n); } catch { return _; } })
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => { try { return String.fromCodePoint(parseInt(h, 16)); } catch { return _; } });
+}
+
+// Strip store SEO wrappers and keep the core product name. Amazon titles read
+// "Brand Model - long descriptors : Category"; noon adds "تسوق ... أونلاين | ...".
+function cleanName(s) {
+  let t = decodeEntities(String(s || '')).split('|')[0];
+  t = t.replace(/^\s*amazon\.[a-z.]+\s*:\s*/i, '')
+       .replace(/^\s*(buy|shop|تسوق|اشتري)\s+/i, '')
+       .replace(/\s+online\b.*$/i, '')
+       .replace(/\s*أونلاين.*$/, '');
+  // cut at the first " - " / " : " separator — everything after is descriptors/category
+  t = t.split(/\s+[-–—:]\s+/)[0];
+  return t.replace(/\s{2,}/g, ' ').trim();
 }
 
 // One salient spec number, strongest fact first.
@@ -83,6 +94,7 @@ function extractSpec(text) {
     [/(\d+(?:\.\d+)?)\s?(TB|GB)\b/i,  (n, u) => ({ en: `${n}${u.toUpperCase()} of storage`, ar: `${n} ${/tb/i.test(u) ? 'تيرا' : 'جيجا'} تخزين` })],
     [/(\d+(?:\.\d+)?)\s?Hz\b/i,       (n) => ({ en: `${n}Hz`, ar: `${n} هرتز` })],
     [/(\d+(?:\.\d+)?)\s?(?:inch|["”])\b/i, (n) => ({ en: `${n} inch`, ar: `${n} إنش` })],
+    [/(\d+)\s?days?['’\s]+(?:battery|of\s+battery|life)/i, (n) => ({ en: `${n} day battery`, ar: `${n} أيام بطارية` })],
   ];
   for (const [re, fmt] of rules) { const m = t.match(re); if (m) return fmt(m[1], m[2]); }
   return null;
