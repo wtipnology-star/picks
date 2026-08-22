@@ -95,6 +95,12 @@
   @media(min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
   @media(min-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
 
+  /* featured swipe strip: mobile only (hidden on desktop) */
+  .featured{display:none}
+  .ftitle{font-size:12px;font-weight:700;color:var(--grey);letter-spacing:0;
+          margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+  .ftitle::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+
   /* ---- Phones: shrink the hero so products surface sooner, and float the
      search as a bottom bar within thumb reach. Desktop keeps search up top. ---- */
   @media(max-width:639px){
@@ -131,8 +137,8 @@
   .card:hover{border-color:var(--line);transform:translateY(-2px)}
   .card:hover::before{transform:scaleY(1)}
 
-  .strip{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
-         border-bottom:1px solid var(--line-soft);font-size:12px;font-weight:600}
+  .strip{display:flex;justify-content:space-between;align-items:center;
+         font-size:12px;font-weight:600;margin-bottom:8px}
   .cat{color:var(--grey)}
   .tested{color:var(--orange);display:flex;align-items:center;gap:6px;font-weight:700}
   .tested::before{content:"";width:5px;height:5px;background:var(--orange);
@@ -206,6 +212,32 @@
   html[dir="ltr"] #q,
   html[dir="ltr"] .chip,
   html[dir="ltr"] .buy{font-family:var(--lat)}
+
+  /* ---- Phones, part 2: compact scannable list + swipeable featured strip.
+     Placed after the base card rules so these win when the viewport is a phone. ---- */
+  @media(max-width:639px){
+    .grid{gap:12px}
+    .card{flex-direction:row;align-items:stretch}
+    .card .shot{width:116px;flex:none;aspect-ratio:auto;align-self:stretch}
+    .card .body{padding:12px 14px;min-width:0}
+    .card .strip{margin-bottom:6px}
+    .card .name{font-size:15px;margin-bottom:6px;line-height:1.4}
+    .card .verdict{font-size:13px;line-height:1.65;margin-bottom:10px}
+    .card .foot{padding-top:0;border-top:0}
+    .card .buy{display:inline-block;width:auto;padding:8px 18px;font-size:12px}
+
+    /* featured strip: full-image cards you swipe sideways (buy stays a tap) */
+    .featured{display:block}
+    .ftrack{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;
+            padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .ftrack::-webkit-scrollbar{display:none}
+    .ftrack .card{flex:0 0 84%;flex-direction:column;scroll-snap-align:start}
+    .ftrack .card .shot{width:100%;aspect-ratio:4/3;align-self:auto}
+    .ftrack .card .body{padding:14px}
+    .ftrack .card .name{font-size:16px;margin-bottom:8px}
+    .ftrack .card .verdict{font-size:13.5px;margin-bottom:14px}
+    .ftrack .card .buy{display:block;width:auto;padding:11px 22px;font-size:13px}
+  }
 </style>
 </head>
 <body>
@@ -231,6 +263,10 @@
   </section>
 
   <div class="wrap">
+    <section class="featured" id="featured">
+      <div class="ftitle" id="ftitle"></div>
+      <div class="ftrack" id="ftrack"></div>
+    </section>
     <div class="toolbar">
       <div class="searchbar">
         <div class="search">
@@ -425,8 +461,44 @@ function renderFilters(){
 const matches=(p,q)=> !q || [p.name_ar,p.name_en,p.verdict_ar,p.verdict_en,p.cat_ar,p.cat_en]
   .join(' ').toLowerCase().includes(q.toLowerCase());
 
+function cardHTML(p,t,hl){
+  const nm = hl ? mark(nameOf(p),term) : esc(nameOf(p));
+  const vd = hl ? mark(verdictOf(p),term) : esc(verdictOf(p));
+  return `
+    <article class="card">
+      <div class="shot">
+        ${p.img ? `<img src="${esc(p.img)}" alt="${esc(nameOf(p))}" loading="lazy">`
+                : `<span class="ph">${esc(t.addimg)}</span>`}
+      </div>
+      <div class="body">
+        <div class="strip">
+          <span class="cat">${esc(catOf(p))}</span>
+          <span class="tested">${esc(t.tested)}</span>
+        </div>
+        <h3 class="name">${nm}</h3>
+        <p class="verdict">${vd}</p>
+        <div class="foot">
+          <a class="buy" href="${esc(p.url)}" target="_blank" rel="nofollow sponsored noopener">${esc(t.buy)}</a>
+        </div>
+      </div>
+    </article>`;
+}
+
+/* Swipeable highlight strip (mobile only via CSS). Shows the first two picks, only
+   in the default browse view — hidden while searching or filtering. */
+function renderFeatured(){
+  const t=T[lang], sec=$('featured');
+  const feat=PICKS.slice(0,2);
+  const browsing = !term && active==='__all__';
+  if(!browsing || feat.length<2){ sec.style.display='none'; $('ftrack').innerHTML=''; return; }
+  sec.style.display='';
+  $('ftitle').textContent = lang==='ar'?'مختارات':'Featured';
+  $('ftrack').innerHTML = feat.map(p=>cardHTML(p,t,false)).join('');
+}
+
 function renderGrid(){
   const t=T[lang];
+  renderFeatured();
   const list=PICKS.filter(p=>active==='__all__'||p.cat_en===active).filter(p=>matches(p,term));
   $('count').textContent = t.showing(list.length);
 
@@ -435,24 +507,7 @@ function renderGrid(){
     return;
   }
 
-  $('grid').innerHTML = list.map(p=>`
-    <article class="card">
-      <div class="strip">
-        <span class="cat">${esc(catOf(p))}</span>
-        <span class="tested">${esc(t.tested)}</span>
-      </div>
-      <div class="shot">
-        ${p.img ? `<img src="${esc(p.img)}" alt="${esc(nameOf(p))}" loading="lazy">`
-                : `<span class="ph">${esc(t.addimg)}</span>`}
-      </div>
-      <div class="body">
-        <h3 class="name">${mark(nameOf(p),term)}</h3>
-        <p class="verdict">${mark(verdictOf(p),term)}</p>
-        <div class="foot">
-          <a class="buy" href="${esc(p.url)}" target="_blank" rel="nofollow sponsored noopener">${esc(t.buy)}</a>
-        </div>
-      </div>
-    </article>`).join('');
+  $('grid').innerHTML = list.map(p=>cardHTML(p,t,true)).join('');
 }
 
 const renderAll=()=>{renderChrome();renderFilters();renderGrid();};
