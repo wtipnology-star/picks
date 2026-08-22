@@ -95,12 +95,6 @@
   @media(min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
   @media(min-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
 
-  /* featured swipe strip: mobile only (hidden on desktop) */
-  .featured{display:none}
-  .ftitle{font-size:12px;font-weight:700;color:var(--grey);letter-spacing:0;
-          margin:14px 0 8px;display:flex;align-items:center;gap:8px}
-  .ftitle::after{content:"";flex:1;height:1px;background:var(--line-soft)}
-
   /* ---- Phones: shrink the hero so products surface sooner, and float the
      search as a bottom bar within thumb reach. Desktop keeps search up top. ---- */
   @media(max-width:639px){
@@ -213,7 +207,7 @@
   html[dir="ltr"] .chip,
   html[dir="ltr"] .buy{font-family:var(--lat)}
 
-  /* ---- Phones, part 2: compact scannable list + swipeable featured strip.
+  /* ---- Phones, part 2: compact scannable list (thumbnail beside the text).
      Placed after the base card rules so these win when the viewport is a phone. ---- */
   @media(max-width:639px){
     .grid{gap:12px}
@@ -225,18 +219,6 @@
     .card .verdict{font-size:13px;line-height:1.65;margin-bottom:10px}
     .card .foot{padding-top:0;border-top:0}
     .card .buy{display:inline-block;width:auto;padding:8px 18px;font-size:12px}
-
-    /* featured strip: full-image cards you swipe sideways (buy stays a tap) */
-    .featured{display:block}
-    .ftrack{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;
-            padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-    .ftrack::-webkit-scrollbar{display:none}
-    .ftrack .card{flex:0 0 84%;flex-direction:column;scroll-snap-align:start}
-    .ftrack .card .shot{width:100%;aspect-ratio:4/3;align-self:auto}
-    .ftrack .card .body{padding:14px}
-    .ftrack .card .name{font-size:16px;margin-bottom:8px}
-    .ftrack .card .verdict{font-size:13.5px;margin-bottom:14px}
-    .ftrack .card .buy{display:block;width:auto;padding:11px 22px;font-size:13px}
   }
 </style>
 </head>
@@ -263,10 +245,6 @@
   </section>
 
   <div class="wrap">
-    <section class="featured" id="featured">
-      <div class="ftitle" id="ftitle"></div>
-      <div class="ftrack" id="ftrack"></div>
-    </section>
     <div class="toolbar">
       <div class="searchbar">
         <div class="search">
@@ -408,7 +386,7 @@ function rowsToPicks(rows){
       cat_ar:g('category_ar'), cat_en:g('category_en'),
       name_ar:g('name_ar'),    name_en:g('name_en'),
       verdict_ar:g('verdict_ar'), verdict_en:g('verdict_en'),
-      url:g('url')||'#', img:g('image'), featured:g('featured')
+      url:g('url')||'#', img:g('image')
     });
   }
   return out;
@@ -484,21 +462,8 @@ function cardHTML(p,t,hl){
     </article>`;
 }
 
-/* Swipeable highlight strip (mobile only via CSS). Shows picks flagged featured=yes
-   in products.csv, only in the default browse view; hidden while searching/filtering. */
-function renderFeatured(){
-  const t=T[lang], sec=$('featured');
-  const feat=PICKS.filter(p=>/^(yes|true|1|y)$/i.test((p.featured||'').trim()));
-  const browsing = !term && active==='__all__';
-  if(!browsing || !feat.length){ sec.style.display='none'; $('ftrack').innerHTML=''; return; }
-  sec.style.display='';
-  $('ftitle').textContent = lang==='ar'?'مختارات':'Featured';
-  $('ftrack').innerHTML = feat.map(p=>cardHTML(p,t,false)).join('');
-}
-
 function renderGrid(){
   const t=T[lang];
-  renderFeatured();
   const list=PICKS.filter(p=>active==='__all__'||p.cat_en===active).filter(p=>matches(p,term));
   $('count').textContent = t.showing(list.length);
 

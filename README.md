@@ -8,9 +8,8 @@ single source of truth, one script to add products, and tests that hold the line
 - `index.html` reads `products.csv` at load time and renders the cards. Arabic first,
   RTL, with an English toggle. No build step, no database, no Google Sheet.
 - `products.csv` is the source of truth. Columns:
-  `show | category_ar | category_en | name_ar | name_en | verdict_ar | verdict_en | url | image | featured`
-  Set `show` to `no` to hide a row without deleting it. Set `featured` to `yes` to add
-  a pick to the swipeable "Featured" strip at the top on mobile.
+  `show | category_ar | category_en | name_ar | name_en | verdict_ar | verdict_en | url | image`
+  Set `show` to `no` to hide a row without deleting it.
 - Push to `main` and the site republishes itself (GitHub Pages). No more manual upload.
 
 ## Add a product
