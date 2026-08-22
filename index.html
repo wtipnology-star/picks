@@ -408,7 +408,7 @@ function rowsToPicks(rows){
       cat_ar:g('category_ar'), cat_en:g('category_en'),
       name_ar:g('name_ar'),    name_en:g('name_en'),
       verdict_ar:g('verdict_ar'), verdict_en:g('verdict_en'),
-      url:g('url')||'#', img:g('image')
+      url:g('url')||'#', img:g('image'), featured:g('featured')
     });
   }
   return out;
@@ -484,13 +484,13 @@ function cardHTML(p,t,hl){
     </article>`;
 }
 
-/* Swipeable highlight strip (mobile only via CSS). Shows the first two picks, only
-   in the default browse view — hidden while searching or filtering. */
+/* Swipeable highlight strip (mobile only via CSS). Shows picks flagged featured=yes
+   in products.csv, only in the default browse view; hidden while searching/filtering. */
 function renderFeatured(){
   const t=T[lang], sec=$('featured');
-  const feat=PICKS.slice(0,2);
+  const feat=PICKS.filter(p=>/^(yes|true|1|y)$/i.test((p.featured||'').trim()));
   const browsing = !term && active==='__all__';
-  if(!browsing || feat.length<2){ sec.style.display='none'; $('ftrack').innerHTML=''; return; }
+  if(!browsing || !feat.length){ sec.style.display='none'; $('ftrack').innerHTML=''; return; }
   sec.style.display='';
   $('ftitle').textContent = lang==='ar'?'مختارات':'Featured';
   $('ftrack').innerHTML = feat.map(p=>cardHTML(p,t,false)).join('');

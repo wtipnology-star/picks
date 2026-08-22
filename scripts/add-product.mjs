@@ -21,7 +21,7 @@ import { findPrice, findFancyDash, hasHyphen } from './guardrails.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CSV = join(ROOT, 'products.csv');
-const HEADER = 'show,category_ar,category_en,name_ar,name_en,verdict_ar,verdict_en,url,image';
+const HEADER = 'show,category_ar,category_en,name_ar,name_en,verdict_ar,verdict_en,url,image,featured';
 
 const ACRONYMS = new Set(['USB', 'GAN', 'GaN', 'HDMI', 'RGB', 'LED', 'ANC', 'TWS', 'PD', 'AI', '4K', '8K', 'TV', 'SSD', 'HD', 'GB', 'TB']);
 // Keyword -> category. Order matters (first match wins). Patterns use word
@@ -184,7 +184,7 @@ async function main() {
 
   const row = {
     show: 'yes', category_ar: cat.ar, category_en: cat.en,
-    name_ar, name_en, verdict_ar, verdict_en, url, image: '',
+    name_ar, name_en, verdict_ar, verdict_en, url, image: '', featured: 'no',
   };
 
   // Enforce the guardrails on what we are about to write.
@@ -199,7 +199,7 @@ async function main() {
   if (!name_en.includes(' ')) console.warn('  ! could not read a clean product name (short/redirect link). Edit name_en below before it goes live.');
   if (merchant.id !== 'noon' && name_ar === name_en) console.warn('  ! Arabic name copied from English. Rewrite name_ar in your dialect.');
 
-  const line = [row.show, row.category_ar, row.category_en, row.name_ar, row.name_en, row.verdict_ar, row.verdict_en, row.url, row.image].map(csvEscape).join(',');
+  const line = [row.show, row.category_ar, row.category_en, row.name_ar, row.name_en, row.verdict_ar, row.verdict_en, row.url, row.image, row.featured].map(csvEscape).join(',');
   console.log('\n  store      ' + merchant.label);
   console.log('  category   ' + row.category_en + '  /  ' + row.category_ar);
   console.log('  name (en)  ' + row.name_en);
@@ -207,6 +207,7 @@ async function main() {
   console.log('  verdict    ' + (verdict_en || '(blank)'));
   console.log('  verdict ع  ' + (verdict_ar || '(فاضي)'));
   console.log('  url        ' + row.url);
+  console.log('  featured   ' + row.featured + '  (set to "yes" in products.csv to add it to the swipe strip)');
   if (!spec) {
     console.log('\n  No spec number was on the page. The verdict is blank on purpose.');
     console.log('  Write the one fact a spec sheet could not: what it replaced, what it');
